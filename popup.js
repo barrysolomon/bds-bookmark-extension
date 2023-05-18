@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', function () {
     addButton.addEventListener('click', function () {
         addBookmarkFromPage();
     });
+    document.getElementById('clearAllButton').addEventListener('click', function () {
+        chrome.storage.sync.set({ bookmarks: [] }, function () {
+            var table = document.getElementById('bookmarksTable').getElementsByTagName('tbody')[0];
+            table.innerHTML = "";  // Clear the table
+        });
+    });
 
     function isJsonString(str) {
         try {
@@ -46,8 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
     function deleteQueryParamAndOptionTag(event) {
-      
+
         var bookmarkId = event.target.dataset.bookmarkId;
         var bookmarkUrl = document.getElementById(bookmarkId).href;
         var parsedUrl = new URL(bookmarkUrl);
@@ -72,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addBookmarkToTable(bookmark) {
+
         var table = document.getElementById('bookmarksTable').getElementsByTagName('tbody')[0];
         var row = table.insertRow(-1);
         var cell1 = row.insertCell(0);
@@ -81,67 +89,161 @@ document.addEventListener('DOMContentLoaded', function () {
         var cell5 = row.insertCell(4);
         var cell6 = row.insertCell(5);
 
-        cell1.innerHTML = '<a id="' + bookmark.id + '" href="' + bookmark.url + '" target="_blank"><img src="http://www.google.com/s2/favicons?domain=' + bookmark.url + '" /></a>';
-        cell2.innerHTML = '<a id="shortname-' + bookmark.id + '" href="' + bookmark.url + '" target="_blank">' + bookmark.shortName + '</a>';
-        cell3.innerHTML = bookmark.name;
-        cell4.innerHTML = bookmark.description;
-
         // Parse the query string of the URL
         var parsedUrl = new URL(bookmark.url);
-        var searchParams = parsedUrl.searchParams;
+
+        cell1.innerHTML = '<a id="' + bookmark.id + '" href="' + bookmark.url + '" target="_blank"><img src="http://www.google.com/s2/favicons?domain=' + bookmark.url + '" /></a>';
+
+        // Create a div to hold the link and edit button
+        var linkDiv = document.createElement('div');
+        linkDiv.style = 'display: flex; align-items: center;'; // style to align items
+
+        // Create link
+        var editableLink = document.createElement('a');  // changed variable name from openLink to editableLink
+        editableLink.id = `link-${bookmark.id}`; // ID to identify the link later
+        editableLink.href = bookmark.url;
+        editableLink.target = "_blank";
+        editableLink.textContent = bookmark.description;
+
+        // Create edit button
+        var editButton = document.createElement('button');
+        editButton.innerHTML = '&#9998;'; // Unicode for edit icon
+        editButton.style.border = 'none';
+
+        editButton.addEventListener('click', function () {
+
+            // Create editable input field
+            var linkEditInput = document.createElement('input');
+            linkEditInput.value = editableLink.textContent;
+            linkEditInput.addEventListener('blur', updateLink);
+            linkEditInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    updateLink();
+                }
+            });
+            // Replace link with input field
+            linkDiv.replaceChild(linkEditInput, editableLink);
+            linkEditInput.focus();
+
+            // Function to update link text and replace input field with link
+            function updateLink() {
+                var newLinkText = linkEditInput.value.trim();
+                editableLink.textContent = newLinkText;
+                bookmark.shortName = newLinkText;
+                linkDiv.replaceChild(editableLink, linkEditInput);
+                // Save the new link text to storage
+                chrome.storage.sync.get({ bookmarks: [] }, function (result) {
+                    var bookmarks = result.bookmarks;
+                    var index = bookmarks.findIndex(b => b.id === bookmark.id);
+                    if (index > -1) {
+                        bookmarks[index].shortName = newLinkText;
+                        chrome.storage.sync.set({ bookmarks: bookmarks });
+                    }
+                });
+            }
+        });
+
+        // Append link and edit button to the div
+        linkDiv.appendChild(editableLink);
+        linkDiv.appendChild(editButton);
+        cell2.appendChild(linkDiv);
+
+        // Make the 'Open' cell a link
+        var openLink = document.createElement('a');  // This openLink is a separate variable for the 'Open' link.
+        openLink.href = bookmark.url;
+        openLink.target = "_blank";
+        openLink.textContent = "Open";
+        cell3.appendChild(openLink);
+
+        cell4.innerHTML = bookmark.description;
 
         // Create a div to contain the option tags
         var optionsDiv = document.createElement('div');
 
         // Create a tag for each option
+        var searchParams = parsedUrl.searchParams;
         Array.from(searchParams).forEach(param => {
 
-            var optionTag = document.createElement('span');
-            optionTag.textContent = param[0]; // Show only the parameter name
-            optionTag.title = param[1]; // Use the parameter value as a tooltip
-            optionTag.style = 'background-color: #ddd; margin: 2px; padding: 2px; border-radius: 5px; border: 1px solid #000; margin: 5px; white-space: nowrap; padding: 5px;'; // Added padding
+            let parameterValues = [];
 
-            // Add a delete button to the option tag
-            var deleteButton = document.createElement('button');
-            deleteButton.textContent = 'X';
-            deleteButton.style = 'margin-left: 5px; background-color: red; color: white; border: none; border-radius: 2px; cursor: pointer;';
+            if (param[0] === "XXXXXXdistributionFilters") {
+                try {
+                    // Parse JSON value of "distributionFilters" into array
+                    parameterValues = JSON.parse(param[1]);
+                } catch (e) {
+                    console.error("Failed to parse distributionFilters value", e);
+                    return; // Continue to next iteration
+                }
+            } else {
+                parameterValues = [param[1]];
+            }
 
-            deleteButton.onclick = function () {
-                // Get the original URL before updating it
-                var originalUrl = bookmark.url;
-            
-                // Remove the option from the URL's query string
-                searchParams.delete(param[0]);
-                bookmark.url = parsedUrl.toString();
-            
-                // Update the URL in the table
-                cell2.innerHTML = '<a href="' + bookmark.url + '" target="_blank">' + bookmark.shortName + '</a>';
-            
-                // Remove the option tag
-                optionsDiv.removeChild(optionTag);
-            
-                // Update the URL in the storage
-                chrome.storage.sync.get({ bookmarks: [] }, function (result) {
-                    var bookmarks = result.bookmarks;
-                    // Use the original URL to find the index of the bookmark
-                    var index = bookmarks.findIndex(b => b.url === originalUrl);
-                    if (index > -1) {
-                        // Update the URL, then update the bookmark at the found index in the storage
-                        bookmarks[index].url = bookmark.url;
-                        chrome.storage.sync.set({ bookmarks: bookmarks });
+            parameterValues.forEach(value => {
+
+                var optionTag = document.createElement('span');
+                optionTag.textContent = param[0]; // Show only the parameter name
+                optionTag.title = value; // Use the parameter value as a tooltip
+                optionTag.style = 'background-color: #ddd; margin: 2px; padding: 2px; border-radius: 5px; border: 1px solid #000; margin: 5px; white-space: nowrap; padding: 5px;'; // Added padding
+
+                // Add a delete button to the option tag
+                var deleteButton = document.createElement('button');
+                deleteButton.textContent = 'X';
+                deleteButton.style = 'margin-left: 5px; background-color: red; color: white; border: none; border-radius: 2px; cursor: pointer;';
+
+                deleteButton.onclick = function () {
+
+                    if (param[0] === "XXXXdistributionFilters") {
+                        var newFilterValues = JSON.parse(searchParams.get("distributionFilters")).filter(filterValue => filterValue !== value);
+
+                        if (newFilterValues.length > 0) {
+                            // Update the value in the URL's query string
+                            searchParams.set("distributionFilters", JSON.stringify(newFilterValues));
+                        } else {
+                            // If no filter values are left, remove the parameter
+                            searchParams.delete("distributionFilters");
+                        }
+                    } else {
+                        // Remove the option from the URL's query string
+                        searchParams.delete(param[0]);
                     }
+
+                    // Get the original URL before updating it
+                    var originalUrl = bookmark.url;
+
+                    // Remove the option from the URL's query string
+                    searchParams.delete(param[0]);
+                    bookmark.url = parsedUrl.toString();
+
+                    // Update the URL in the table
+                    cell2.innerHTML = '<a href="' + bookmark.url + '" target="_blank">' + bookmark.shortName + '</a>';
+
+                    // Remove the option tag
+                    optionsDiv.removeChild(optionTag);
+
+                    // Update the URL in the storage
+                    chrome.storage.sync.get({ bookmarks: [] }, function (result) {
+                        var bookmarks = result.bookmarks;
+                        // Use the original URL to find the index of the bookmark
+                        var index = bookmarks.findIndex(b => b.url === originalUrl);
+                        if (index > -1) {
+                            // Update the URL, then update the bookmark at the found index in the storage
+                            bookmarks[index].url = bookmark.url;
+                            chrome.storage.sync.set({ bookmarks: bookmarks });
+                        }
+                    });
+                };
+
+                optionTag.appendChild(deleteButton);
+
+                optionsDiv.style = 'overflow: auto; padding: 5px;'; // Added padding to optionsDiv
+                optionsDiv.appendChild(optionTag);
+
+                // Attach delete event listener directly
+                optionTag.addEventListener('click', function (event) {
+                    var param = event.target.getAttribute('data-param');
+                    deleteQueryParamAndOptionTag(event, param);
                 });
-            };
-            
-            optionTag.appendChild(deleteButton);
 
-            optionsDiv.style = 'overflow: auto; padding: 5px;'; // Added padding to optionsDiv
-            optionsDiv.appendChild(optionTag);
-
-            // Attach delete event listener directly
-            optionTag.addEventListener('click', function (event) {
-                var param = event.target.getAttribute('data-param');
-                deleteQueryParamAndOptionTag(event, param);
             });
 
         });
@@ -152,21 +254,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var deleteButton = document.createElement('button');
         deleteButton.innerHTML = '&#128465;';
-
+        deleteButton.style.border = 'none';
+        
         deleteButton.addEventListener('click', function () {
             deleteBookmarkFromStorage(bookmark, row);
         });
 
         actionDiv.appendChild(deleteButton);
 
-        var updateButton = document.createElement('button');
-        updateButton.innerHTML = '&#x1F589;'; // Unicode character for refresh icon
-        updateButton.addEventListener('click', function () {
-            updateBookmarkFromPage(bookmark, row);
-        });
-        actionDiv.appendChild(updateButton);
+        // var updateButton = document.createElement('button');
+        // updateButton.innerHTML = '&#x1F589;'; // Unicode character for refresh icon
+        // updateButton.addEventListener('click', function () {
+        //     updateBookmarkFromPage(bookmark, row);
+        // });
+        // actionDiv.appendChild(updateButton);
 
         cell6.appendChild(actionDiv);
+
     }
 
     function updateBookmarkFromPage(bookmark, row) {

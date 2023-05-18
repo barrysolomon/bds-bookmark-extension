@@ -1,76 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 
 <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        #header {
-            margin-bottom: 10px;
-        }
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 800px;
+}
 
-        #toolbar button {
-            margin-right: 5px;
-        }
-
-        #bookmarksTable {
-            width: 100%;
+/* #bookmarksTable {
+    display: inline-table;
+} */
+        /* additional custom styling to resemble Excel */
+        .excel-table {
+            border: solid 1px #ddeeee;
             border-collapse: collapse;
+            border-spacing: 0;
+            font: normal 13px Arial, sans-serif;
         }
 
-        #bookmarksTable th,
-        #bookmarksTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        table {
-            width: 98%;
+        .excel-table th {
+            background-color: #ddefef;
+            border: solid 1px #ddeeee;
+            color: #336b6b;
+            padding: 10px;
             text-align: left;
-            border-collapse: collapse;
-            resize: both;
-            overflow: auto;
+            text-shadow: 1px 1px 1px #fff;
         }
 
-        th,
-        td {
-            padding: 5px;
+        .excel-table td {
+            border: solid 1px #ddeeee;
+            color: #333;
+            padding: 10px;
+            text-shadow: 1px 1px 1px #fff;
         }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        #toolbar {
-            margin-bottom: 10px;
-        }
-    </style>
     </style>
 </head>
 
 <body>
-    <div id="header"> <!-- header placeholder -->
+    <div class="container mt-3">
+        <div class="d-flex justify-content-between">
+            <h3>Lumigo Bookmarks
+                
+            </h3>
+            <div class="btn-group">
+                <button id="addButton" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+                &nbsp;&nbsp;
+                <button id="clearAllButton" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+        </div>
+        <table id="bookmarksTable" class="table table-striped table-hover excel-table mt-3">
+            <thead>
+                <tr>
+                    <th scope="col">Icon</th>
+                    <th scope="col">Open</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Options</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
-    <div id="toolbar">
-        <button id="addButton">Add</button>
-    </div>
-    <table id="bookmarksTable">
-        <thead>
-            <tr>
-                <th>Icon</th>
-                <th>Short Name</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Options</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <script src="./lib/jquery.min.js"></script>
+    <script src="./lib/popper.min.js"></script>
+    <script src="./lib/bootstrap.min.js"></script>
     <script src="popup.js"></script>
 </body>
 
