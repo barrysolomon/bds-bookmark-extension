@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #header {
+            margin-bottom: 10px;
+        }
+
+        #toolbar button {
+            margin-right: 5px;
+        }
+
+        #bookmarksTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #bookmarksTable th,
+        #bookmarksTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        table {
+            width: 98%;
+            text-align: left;
+            border-collapse: collapse;
+            resize: both;
+            overflow: auto;
+        }
+
+        th,
+        td {
+            padding: 5px;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #toolbar {
+            margin-bottom: 10px;
+        }
+    </style>
+    </style>
+</head>
+
+<body>
+    <div id="header"> <!-- header placeholder -->
+    </div>
+    <div id="toolbar">
+        <button id="addButton">Add</button>
+    </div>
+    <table id="bookmarksTable">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Short Name</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Options</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script src="popup.js"></script>
+</body>
+
+</html>
