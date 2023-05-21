@@ -4,14 +4,14 @@
 <head>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 800px;
-}
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 800px;
+        }
 
-/* #bookmarksTable {
+        /* #bookmarksTable {
     display: inline-table;
 } */
         /* additional custom styling to resemble Excel */
@@ -38,13 +38,15 @@ body {
             text-shadow: 1px 1px 1px #fff;
         }
     </style>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 
 <body>
+
     <div class="container mt-3">
         <div class="d-flex justify-content-between">
             <h3>Lumigo Bookmarks
-                
+
             </h3>
             <div class="btn-group">
                 <button id="addButton" class="btn btn-primary">
@@ -54,14 +56,21 @@ body {
                 <button id="clearAllButton" class="btn btn-danger">
                     <i class="fas fa-trash"></i> Clear All
                 </button>
+                &nbsp;&nbsp;
+                <button id="export" class="btn btn-secondary">
+                    Export
+                </button>
+                &nbsp;&nbsp;
+                <button id="import" class="btn btn-secondary">
+                    Import
+                </button>
             </div>
         </div>
         <table id="bookmarksTable" class="table table-striped table-hover excel-table mt-3">
             <thead>
                 <tr>
-                    <th scope="col">Icon</th>
+                    <th scope="col"></th>
                     <th scope="col">Open</th>
-                    <th scope="col">Name</th>
                     <th scope="col">Description</th>
                     <th scope="col">Options</th>
                     <th scope="col">Actions</th>
@@ -71,10 +80,12 @@ body {
             </tbody>
         </table>
     </div>
+
     <script src="./lib/jquery.min.js"></script>
     <script src="./lib/popper.min.js"></script>
     <script src="./lib/bootstrap.min.js"></script>
     <script src="popup.js"></script>
+
 </body>
 
 </html>

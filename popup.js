@@ -207,8 +207,18 @@ document.addEventListener('DOMContentLoaded', function () {
             parameterValues.forEach(value => {
 
                 var optionTag = document.createElement('span');
-                optionTag.textContent = param[0]; // Show only the parameter name
-                optionTag.title = value; // Use the parameter value as a tooltip
+
+                switch (param[0]) {
+                    case "timespan":
+                        optionTag.title = param[0]; // Show only the parameter name
+                        optionTag.textContent = value; // Use the parameter value as a tooltip
+                        break;
+                    default:
+                        optionTag.textContent = param[0]; // Show only the parameter name
+                        optionTag.title = value; // Use the parameter value as a tooltip
+                        break;
+                }
+
                 optionTag.style = 'background-color: #ddd; margin: 2px; padding: 2px; border-radius: 5px; border: 1px solid #000; margin: 5px; white-space: nowrap; padding: 5px;'; // Added padding
 
                 // Add a delete button to the option tag
