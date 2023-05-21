@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Update the URL in the bookmark link
         document.getElementById(bookmarkId).href = parsedUrl.toString();
-        document.getElementById("shortname-" + bookmarkId).href = parsedUrl.toString();
 
         // Update the URL in the storage
         chrome.storage.sync.get({ bookmarks: [] }, function (result) {
@@ -84,10 +83,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var row = table.insertRow(-1);
         var cell1 = row.insertCell(0);
         var cell2 = row.insertCell(1);
-        var cell3 = row.insertCell(2);
-        var cell4 = row.insertCell(3);
-        var cell5 = row.insertCell(4);
-        var cell6 = row.insertCell(5);
+        //var cell3 = row.insertCell(2);
+        var cell4 = row.insertCell(2);
+        var cell5 = row.insertCell(3);
+        var cell6 = row.insertCell(4);
 
         // Parse the query string of the URL
         var parsedUrl = new URL(bookmark.url);
@@ -102,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var editableLink = document.createElement('a');  // changed variable name from openLink to editableLink
         editableLink.id = `link-${bookmark.id}`; // ID to identify the link later
         editableLink.href = bookmark.url;
+        editableLink.title = bookmark.url;
         editableLink.target = "_blank";
         editableLink.textContent = bookmark.description;
 
@@ -148,14 +148,40 @@ document.addEventListener('DOMContentLoaded', function () {
         linkDiv.appendChild(editButton);
         cell2.appendChild(linkDiv);
 
-        // Make the 'Open' cell a link
-        var openLink = document.createElement('a');  // This openLink is a separate variable for the 'Open' link.
-        openLink.href = bookmark.url;
-        openLink.target = "_blank";
-        openLink.textContent = "Open";
-        cell3.appendChild(openLink);
+        // // Make the 'Open' cell a link
+        // var openLink = document.createElement('a');  // This openLink is a separate variable for the 'Open' link.
+        // openLink.href = bookmark.url;
+        // openLink.target = "_blank";
+        // openLink.textContent = "Open";
+        // cell3.appendChild(openLink);
 
-        cell4.innerHTML = bookmark.description;
+        // DESCRIPTION CELL
+
+        // Parse URL's query string
+        var parsedUrl = new URL(bookmark.url);
+        var searchParams = parsedUrl.searchParams;
+
+        // Check if distributionFilters parameter exists
+        if (searchParams.has("distributionFilters")) {
+            try {
+                // Parse distributionFilters value to an object
+                var distributionFilters = JSON.parse(searchParams.get("distributionFilters"));
+
+                // Append each key to the editableLink's text
+                for (var key in distributionFilters) {
+                    //cell4.innerHTML += key.toUpperCase() + ": " + JSON.stringify(distributionFilters[key]) + "<br />";
+                    cell4.innerHTML += distributionFilters[key][0].ui.displayName + "<br />";
+                    //cell4.innerHTML += key.toUpperCase() + ": " + distributionFilters[key].ui.displayName + "<br />";            
+
+                }
+            } catch (e) {
+                console.error("Error parsing distributionFilters:", e);
+                cell4.innerHTML = bookmark.description;
+            }
+        } else {
+            cell4.innerHTML = bookmark.description;
+        }
+
 
         // Create a div to contain the option tags
         var optionsDiv = document.createElement('div');
@@ -255,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var deleteButton = document.createElement('button');
         deleteButton.innerHTML = '&#128465;';
         deleteButton.style.border = 'none';
-        
+
         deleteButton.addEventListener('click', function () {
             deleteBookmarkFromStorage(bookmark, row);
         });
@@ -316,4 +342,73 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     loadBookmarksFromStorage();
+
+    // Export function
+    function exportData() {
+        // Fetch the bookmarks from chrome storage
+        chrome.storage.sync.get({ bookmarks: [] }, function (result) {
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result.bookmarks));
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "bookmarks_export.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+    }
+
+    // Import function
+    function importData() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = function (event) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var bookmarks = JSON.parse(reader.result);
+                chrome.storage.sync.set({ bookmarks: bookmarks }, function () {
+                    alert("Bookmarks Imported Successfully");
+                });
+            };
+            reader.readAsText(event.target.files[0]);
+        };
+
+        input.click();
+    }
+
+    document.getElementById('export').addEventListener('click', exportData);
+    document.getElementById('import').addEventListener('click', importData);
+
+    document.querySelectorAll('th').forEach(th => {
+        const grip = document.createElement('div');
+        grip.innerHTML = "&nbsp;";
+        grip.style.cursor = 'col-resize';
+        grip.style.top = 0;
+        grip.style.right = 0;
+        grip.style.bottom = 0;
+        grip.style.width = '5px';
+        grip.style.position = 'absolute';
+        grip.style.zIndex = '10';
+        grip.addEventListener('mousedown', e => {
+            const thElm = th;
+            const startOffset = th.offsetWidth - e.pageX;
+
+            const mouseMoveHandler = function (e) {
+                thElm.style.width = startOffset + e.pageX + 'px';
+            };
+            const mouseUpHandler = function () {
+                thElm.style.userSelect = 'auto';
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+            };
+
+            thElm.style.userSelect = 'none';
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+        });
+        th.style.position = 'relative';
+        th.appendChild(grip);
+    });
+
 });
