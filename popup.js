@@ -157,31 +157,73 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // DESCRIPTION CELL
 
-        // Parse URL's query string
-        var parsedUrl = new URL(bookmark.url);
-        var searchParams = parsedUrl.searchParams;
+        // Create a div to hold the description and edit button
+        var descDiv = document.createElement('div');
+        descDiv.style = 'display: flex; align-items: center;'; // style to align items
 
-        // Check if distributionFilters parameter exists
-        if (searchParams.has("distributionFilters")) {
-            try {
-                // Parse distributionFilters value to an object
-                var distributionFilters = JSON.parse(searchParams.get("distributionFilters"));
+        // Create description text node
+        var descriptionText = document.createElement('span');
+        descriptionText.id = `desc-${bookmark.id}`; // ID to identify the description later
+        descriptionText.textContent = bookmark.description;
 
-                // Append each key to the editableLink's text
-                for (var key in distributionFilters) {
-                    //cell4.innerHTML += key.toUpperCase() + ": " + JSON.stringify(distributionFilters[key]) + "<br />";
-                    cell4.innerHTML += distributionFilters[key][0].ui.displayName + "<br />";
-                    //cell4.innerHTML += key.toUpperCase() + ": " + distributionFilters[key].ui.displayName + "<br />";            
+        // Create edit button
+        var editButtonDesc = document.createElement('button');
+        editButtonDesc.innerHTML = '&#9998;'; // Unicode for edit icon
+        editButtonDesc.style.border = 'none';
 
+        var updating = false;
+        editButtonDesc.addEventListener('click', function () {
+
+            // Create editable input field
+            var descEditInput = document.createElement('input');
+            descEditInput.value = descriptionText.textContent;
+
+            descEditInput.addEventListener('blur', function () {
+                if (!updating) {
+                    updating = true;
+                    updateDescription();
                 }
-            } catch (e) {
-                console.error("Error parsing distributionFilters:", e);
-                cell4.innerHTML = bookmark.description;
-            }
-        } else {
-            cell4.innerHTML = bookmark.description;
-        }
+            });
 
+            descEditInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevents form submission
+                    if (!updating) {
+                        updating = true;
+                        updateDescription();
+                    }
+                }
+            });
+
+            // Replace description text with input field
+            descDiv.replaceChild(descEditInput, descriptionText);
+            descEditInput.focus();
+
+            // Function to update description text and replace input field with description text node
+            function updateDescription() {
+                var newDescText = descEditInput.value.trim();
+                descriptionText.textContent = newDescText;
+                bookmark.description = newDescText;
+                descDiv.replaceChild(descriptionText, descEditInput);
+                // Save the new description text to storage
+                chrome.storage.sync.get({ bookmarks: [] }, function (result) {
+                    var bookmarks = result.bookmarks;
+                    var index = bookmarks.findIndex(b => b.id === bookmark.id);
+                    if (index > -1) {
+                        bookmarks[index].description = newDescText;
+                        chrome.storage.sync.set({ bookmarks: bookmarks });
+                    }
+                });
+                updating = false;
+            }
+        });
+
+        // Append description text and edit button to the div
+        descDiv.appendChild(descriptionText);
+        descDiv.appendChild(editButtonDesc);
+        cell4.appendChild(descDiv);
+
+        // OPTIONS CELL
 
         // Create a div to contain the option tags
         var optionsDiv = document.createElement('div');
