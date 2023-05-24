@@ -8,10 +8,15 @@ document.addEventListener('DOMContentLoaded', function () {
         bookmarkManager.addBookmarkFromPage();
     });
     document.getElementById('clearAllButton').addEventListener('click', function () {
-        chrome.storage.sync.set({ bookmarks: [] }, function () {
-            var table = document.getElementById('bookmarksTable').getElementsByTagName('tbody')[0];
-            table.innerHTML = "";  // Clear the table
-        });
+
+        var confirmClear = confirm("Are you sure you want to clear all data? This action cannot be undone.");
+        if (confirmClear) {
+            chrome.storage.sync.set({ bookmarks: [] }, function () {
+                var table = document.getElementById('bookmarksTable').getElementsByTagName('tbody')[0];
+                table.innerHTML = "";  // Clear the table
+            });
+        }
+
     });
 
     function isJsonString(str) {
